@@ -1,5 +1,7 @@
 import os
 import pandas as pd
+import ssl
+import requests
 import psycopg2
 import psycopg2.extras
 import re
@@ -80,13 +82,39 @@ def download_data(name=""):
     try:
         if not os.path.isdir("tmp"):
             os.mkdir("tmp")
+            if os.access("tmp", os.W_OK):
+                print("tmp directory is writable")
+            else:
+                print("tmp directory is not writable")
+
         if not os.path.isdir("data"):
             os.mkdir("data")
+            if os.access("data", os.W_OK):
+                print("data directory is writable")
+            else:
+                print("data directory is not writable")
+
+        # General headers to simulate a real browser
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.5",
+            "Connection": "keep-alive"
+        }
+
+        # Create a session to persist cookies
+        session = requests.Session()
 
         if name == "places":
-            URL = "https://chronicdata.cdc.gov/api/views/cwsq-ngmh/rows.csv?accessType=DOWNLOAD"
-
-            fn, _ = urllib.request.urlretrieve(URL, "tmp/data.csv")
+            URL = "https://www.cdc.gov/places/download_places_data_2020.zip"
+            session.get("https://www.cdc.gov/places", headers=headers)  # Initial visit to get cookies
+            response = session.get(URL, headers=headers)
+            if response.status_code == 200:
+                with open("tmp/places_data.zip", "wb") as out_file:
+                    out_file.write(response.content)
+                print("PLACES data download successful.")
+            else:
+                print(f"Error downloading PLACES data: {response.status_code}")
 
             places_df = pd.read_csv("tmp/data.csv")
             places_df["variable"] = places_df["MeasureId"]
@@ -104,12 +132,24 @@ def download_data(name=""):
             load_sdoh_data("data/places_2022.csv", index_col="TRACTFIPS", source="places", version="2022", granularity="tract")
         elif name == "ahrq":
             URL = "https://www.ahrq.gov/downloads/sdoh/sdoh_2020_tract_1_0.xlsx"
+            session.get("https://www.ahrq.gov", headers=headers)  # Initial visit to get cookies
+            response = session.get(URL, headers=headers)
+            if response.status_code == 200:
+                with open("tmp/data.xlsx", "wb") as out_file:
+                    out_file.write(response.content)
+                print("AHRQ data download successful.")
+            else:
+                print(f"Error downloading AHRQ data: {response.status_code}")
 
-            fn, _ = urllib.request.urlretrieve(URL, "tmp/data.xlsx")
+            #fn, _ = urllib.request.urlretrieve(URL, "tmp/data.xlsx")
             var_df = pd.read_excel("tmp/data.xlsx")[['name', 'label']].rename(columns={'name': 'variable', 'label': 'description'}).set_index('variable')
+            print("Excel file read successfully 1.")
             var_df = var_df.iloc[8:]
-
-            data_df = pd.read_excel("tmp/data.xlsx", sheet_name=1).drop(columns=['YEAR', 'COUNTYFIPS', 'STATEFIPS', 'STATE', 'COUNTY', 'REGION', 'TERRITORY']).set_index('TRACTFIPS')
+            #print("Iloc.")
+            data_df = pd.read_excel("tmp/data.xlsx", sheet_name=1)
+            print("Excel file read successfully 2.")
+            data_df = data_df.drop(columns=['YEAR', 'COUNTYFIPS', 'STATEFIPS', 'STATE', 'COUNTY', 'REGION', 'TERRITORY']).set_index('TRACTFIPS')
+            print("Columns dropped & index set.")
 
             var_df.to_csv('data/ahrq_2020_desc.csv')
             data_df.to_csv('data/ahrq_2020.csv')
@@ -119,27 +159,34 @@ def download_data(name=""):
                            census_year=2020, granularity="tract", url="https://www.ahrq.gov/sdoh/data-analytics/sdoh-data.html"))
 
             load_sdoh_data("data/ahrq_2020.csv", index_col="TRACTFIPS", source="ahrq", version="2020", granularity="tract")
-        elif name == "svi":
-            URL = "https://svi.cdc.gov/Documents/Data/2020_SVI_Data/CSV/SVI2020_US.csv"
+       #elif name == "svi":
+       #     URL = "https://svi.cdc.gov/Documents/Data/2020_SVI_Data/CSV/SVI2020_US.csv"
 
-            fn, _ = urllib.request.urlretrieve(URL, "tmp/data.csv")
+       #    fn, _ = urllib.request.urlretrieve(URL, "tmp/data.csv")
 
-            data_df = pd.read_csv("tmp/data.csv").drop(columns=["ST", "STATE", "ST_ABBR", "STCNTY", "COUNTY", "LOCATION"]).set_index('FIPS')
-            var_df = pd.DataFrame(index=data_df.columns)
+       #   data_df = pd.read_csv("tmp/data.csv").drop(columns=["ST", "STATE", "ST_ABBR", "STCNTY", "COUNTY", "LOCATION"]).set_index('FIPS')
+       #     var_df = pd.DataFrame(index=data_df.columns)
 
             # no offical descriptions in table form -- just leave blank
-            var_df.index = var_df.index.rename('variable')
-            var_df['description'] = ""
+       #     var_df.index = var_df.index.rename('variable')
+       #     var_df['description'] = ""
 
-            var_df.to_csv('data/svi_2020_desc.csv')
-            data_df.to_csv('data/svi_2020.csv')
+       #     var_df.to_csv('data/svi_2020_desc.csv')
+       #     data_df.to_csv('data/svi_2020.csv')
 
-            print(load_sdoh_desc("data/svi_2020_desc.csv", source="svi", version="2020", desc="CDC/ATSDR Social Vulnerability Index",
-                           census_year=2020, granularity="tract", url="https://www.atsdr.cdc.gov/placeandhealth/svi/index.html"))
-            load_sdoh_data("data/svi_2020.csv", index_col="FIPS", source="svi", version="2020", granularity="tract")
+       #     print(load_sdoh_desc("data/svi_2020_desc.csv", source="svi", version="2020", desc="CDC/ATSDR Social Vulnerability Index",
+       #                    census_year=2020, granularity="tract", url="https://www.atsdr.cdc.gov/placeandhealth/svi/index.html"))
+       #     load_sdoh_data("data/svi_2020.csv", index_col="FIPS", source="svi", version="2020", granularity="tract")"""
         elif name == "fea":
-            URL = "https://www.ers.usda.gov/webdocs/DataFiles/80526/FoodEnvironmentAtlas.xls?v=7756.1"
-            fn, _ = urllib.request.urlretrieve(URL, "tmp/data.xls")
+            URL = "https://www.fema.gov/api/open/v2/DisasterDeclarationsSummaries"
+            session.get("https://www.fema.gov", headers=headers)  # Initial visit to get cookies
+            response = session.get(URL, headers=headers)
+            if response.status_code == 200:
+                with open("tmp/data.xls", "wb") as out_file:
+                    out_file.write(response.content)
+                print("FEA data download successful.")
+            else:
+                print(f"Error downloading FEA data: {response.status_code}")
 
             var_df = pd.read_excel("tmp/data.xls", sheet_name=1)[["Variable Name", "Variable Code"]].rename(columns={"Variable Name": "description", "Variable Code": "variable"}).set_index("variable")
 
@@ -157,9 +204,15 @@ def download_data(name=""):
                            census_year=2010, granularity="county", url="https://www.ers.usda.gov/data-products/food-environment-atlas/"))
             load_sdoh_data("data/fea_2020.csv", index_col="FIPS", source="fea", version="2020", granularity="county")
         elif name == "cre":
-            URL = "https://www2.census.gov/programs-surveys/demo/datasets/community-resilience/2019/CRE_19_Tract.csv"
-
-            fn, _ = urllib.request.urlretrieve(URL, "tmp/data.csv")
+            URL = "https://www.huduser.gov/portal/datasets/cr/CR_CensusTracts_2021.zip"
+            session.get("https://www.huduser.gov", headers=headers)  # Initial visit to get cookies
+            response = session.get(URL, headers=headers)
+            if response.status_code == 200:
+                with open("tmp/data.csv", "wb") as out_file:
+                    out_file.write(response.content)
+                print("CRE data download successful.")
+            else:
+                print(f"Error downloading CRE data: {response.status_code}")
 
             data_df = pd.read_csv("tmp/data.csv").drop(columns=["STATE", "COUNTY", "TRACT"]).drop(columns=["NAME"]).\
                 set_index("GEO_ID").rename(index=lambda s: s.split("US")[1])
@@ -178,9 +231,15 @@ def download_data(name=""):
                            census_year=2010, granularity="tract", url="https://www.census.gov/programs-surveys/community-resilience-estimates.html"))
             load_sdoh_data("data/cre_2019.csv", index_col="GEO_ID", source="cre", version="2019", granularity="tract")
         elif name == "ruca":
-            URL = "https://www.ers.usda.gov/webdocs/DataFiles/53241/ruca2010revised.xlsx?v=7852.7"
-
-            fn, _ = urllib.request.urlretrieve(URL, "tmp/data.xlsx")
+            URL = "https://www.ers.usda.gov/webdocs/DataFiles/53241/ruca2010revised.xlsx"
+            session.get("https://www.ers.usda.gov", headers=headers)  # Initial visit to get cookies
+            response = session.get(URL, headers=headers)
+            if response.status_code == 200:
+                with open("tmp/data.xlsx", "wb") as out_file:
+                    out_file.write(response.content)
+                print("RUCA data download successful.")
+            else:
+                print(f"Error downloading RUCA data: {response.status_code}")
 
             data_df = pd.read_excel("tmp/data.xlsx", skiprows=1)[["State-County-Tract FIPS Code (lookup by address at http://www.ffiec.gov/Geocode/)", "Primary RUCA Code 2010", "Secondary RUCA Code, 2010 (see errata)"]]
             data_df = data_df.rename(columns={"State-County-Tract FIPS Code (lookup by address at http://www.ffiec.gov/Geocode/)": "FIPS", "Primary RUCA Code 2010": "Primary_RUCA_Code_2010", "Secondary RUCA Code, 2010 (see errata)":"Secondary_RUCA_Code_2010"}).dropna().set_index("FIPS")
@@ -196,23 +255,23 @@ def download_data(name=""):
             print(load_sdoh_desc("data/ruca_2019_desc.csv", source="ruca", version="2019", desc="Rural-Urban Commuting Area Codes",
                            census_year=2010, granularity="tract", url="https://www.ers.usda.gov/data-products/rural-urban-commuting-area-codes.aspx"))
             load_sdoh_data("data/ruca_2019.csv", index_col="FIPS", source="ruca", version="2019", granularity="tract")
-        elif name == "hl":
-            URL = "http://healthliteracymap.unc.edu/download/national_hl_scores.xlsx"
+        # elif name == "hl":
+        #    URL = "http://healthliteracymap.unc.edu/download/national_hl_scores.xlsx"
 
-            fn, _ = urllib.request.urlretrieve(URL, "tmp/data.xlsx")
+       #    fn, _ = urllib.request.urlretrieve(URL, "tmp/data.xlsx")
 
-            data_df = pd.read_excel("tmp/data.xlsx").rename(columns={"Census block group ID": "ID"}).set_index("ID")
+        #    data_df = pd.read_excel("tmp/data.xlsx").rename(columns={"Census block group ID": "ID"}).set_index("ID")
 
-            var_df = pd.DataFrame(index=data_df.columns)
-            var_df.index = var_df.index.rename('variable')
-            var_df['description'] = ""
+        #    var_df = pd.DataFrame(index=data_df.columns)
+        #    var_df.index = var_df.index.rename('variable')
+        #    var_df['description'] = ""
 
-            var_df.to_csv('data/hl_2003_desc.csv')
-            data_df.to_csv('data/hl_2003.csv')
+        #    var_df.to_csv('data/hl_2003_desc.csv')
+        #    data_df.to_csv('data/hl_2003.csv')
 
-            print(load_sdoh_desc("data/hl_2003_desc.csv", source="hl", version="2003", desc="National Health Literacy Map",
-                           census_year=2010, granularity="blockgroup", url="http://healthliteracymap.unc.edu/#understanding_the_data"))
-            load_sdoh_data("data/hl_2003.csv", index_col="ID", source="hl", version="2003", granularity="blockgroup")
+        #    print(load_sdoh_desc("data/hl_2003_desc.csv", source="hl", version="2003", desc="National Health Literacy Map",
+        #                   census_year=2010, granularity="blockgroup", url="http://healthliteracymap.unc.edu/#understanding_the_data"))
+        #   load_sdoh_data("data/hl_2003.csv", index_col="ID", source="hl", version="2003", granularity="blockgroup")"""
         else:
             print(name, "is not a valid SDoH database that can be downloaded.")
     finally:
@@ -221,8 +280,8 @@ def download_data(name=""):
 
 download_data("ahrq")
 download_data("places")
-download_data("svi")
+#download_data("svi")
 download_data('fea')
 download_data('cre')
 download_data('ruca')
-download_data('hl')
+#download_data('hl')
