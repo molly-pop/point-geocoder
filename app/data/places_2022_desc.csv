@@ -1,0 +1,31 @@
+,variable,description
+0,COPD,Health Outcomes: Chronic obstructive pulmonary disease among adults aged >=18 years
+1,OBESITY,Health Outcomes: Obesity among adults aged >=18 years
+3,STROKE,Health Outcomes: Stroke among adults aged >=18 years
+4,DEPRESSION,Health Outcomes: Depression among adults aged >=18 years
+5,LPA,Health Risk Behaviors: No leisure-time physical activity among adults aged >=18 years
+8,CASTHMA,Health Outcomes: Current asthma among adults aged >=18 years
+9,MAMMOUSE,Prevention: Mammography use among women aged 50-74 years
+24,TEETHLOST,Health Outcomes: All teeth lost among adults aged >=65 years
+25,ARTHRITIS,Health Outcomes: Arthritis among adults aged >=18 years
+27,COREM,"Prevention: Older adult men aged >=65 years who are up to date on a core set of clinical preventive services: Flu shot past year, PPV shot ever, Colorectal cancer screening"
+35,DIABETES,Health Outcomes: Diagnosed diabetes among adults aged >=18 years
+40,BINGE,Health Risk Behaviors: Binge drinking among adults aged >=18 years
+43,SLEEP,Health Risk Behaviors: Sleeping less than 7 hours among adults aged >=18 years
+58,ACCESS2,Prevention: Current lack of health insurance among adults aged 18-64 years
+65,BPMED,Prevention: Taking medicine for high blood pressure control among adults aged >=18 years with high blood pressure
+67,PHLTH,Health Status: Physical health not good for >=14 days among adults aged >=18 years
+85,DENTAL,Prevention: Visits to dentist or dental clinic among adults aged >=18 years
+97,MHLTH,Health Status: Mental health not good for >=14 days among adults aged >=18 years
+111,BPHIGH,Health Outcomes: High blood pressure among adults aged >=18 years
+129,CANCER,Health Outcomes: Cancer (excluding skin cancer) among adults aged >=18 years
+130,CHOLSCREEN,Prevention: Cholesterol screening among adults aged >=18 years
+136,CHD,Health Outcomes: Coronary heart disease among adults aged >=18 years
+161,GHLTH,Health Status: Fair or poor self-rated health status among adults aged >=18 years
+184,CHECKUP,Prevention: Visits to doctor for routine checkup within the past year among adults aged >=18 years
+188,CSMOKING,Health Risk Behaviors: Current smoking among adults aged >=18 years
+230,CERVICAL,Prevention: Cervical cancer screening among adult women aged 21-65 years
+309,COLON_SCREEN,"Prevention: Fecal occult blood test, sigmoidoscopy, or colonoscopy among adults aged 50-75 years"
+380,KIDNEY,Health Outcomes: Chronic kidney disease among adults aged >=18 years
+455,HIGHCHOL,Health Outcomes: High cholesterol among adults aged >=18 years who have been screened in the past 5 years
+2745,COREW,"Prevention: Older adult women aged >=65 years who are up to date on a core set of clinical preventive services: Flu shot past year, PPV shot ever, Colorectal cancer screening, and Mammogram past 2 years"
