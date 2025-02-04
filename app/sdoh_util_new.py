@@ -130,10 +130,10 @@ def download_data(name=""):
 
 
 
-download_data("ahrq")
-download_data("places")
-download_data("svi")
-download_data('fea')
-download_data('cre')
-download_data('ruca')
-download_data('hl')
+#download_data("ahrq")
+#download_data("places") #has problems with loading variables but do the thing in doc it's okay
+#download_data("svi")
+#download_data('fea') #has problems, have to figure out
+#download_data('cre')
+#download_data('ruca')
+download_data('hl') # has problems loading --> (False, 'Variables must have alphanumeric (with dash/underscore) names. Error: _Intermediate_(226-309)')
