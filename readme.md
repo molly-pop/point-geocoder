@@ -1,4 +1,4 @@
-=## Geocoder Platform
+## Geocoder Platform
 
 ![Version](https://badgen.net/github/release/kevin-s-guo/point-geocoder) [![Docker](https://badgen.net/badge/icon/docker?icon=docker&label)](https://hub.docker.com/u/ksgi)
 
